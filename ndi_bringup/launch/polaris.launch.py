@@ -1,6 +1,7 @@
 import yaml
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
@@ -11,6 +12,7 @@ def configure(context, *args, **kwargs):
     ip = LaunchConfiguration("ip")
     namespace = LaunchConfiguration("namespace")
     base_frame = LaunchConfiguration("base_frame")
+    gui = LaunchConfiguration("gui")
 
     cfg_path = LaunchConfiguration("config").perform(context)
     with open(cfg_path) as f:
@@ -55,6 +57,21 @@ def configure(context, *args, **kwargs):
         output="screen",
     )
 
+    rviz_config = PathJoinSubstitution(
+        [
+            FindPackageShare("ndi_bringup"),
+            "rviz",
+            "polaris.rviz",
+        ]
+    )
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        arguments=["-d", rviz_config],
+        output="log",
+        condition=IfCondition(gui),
+    )
+
     spawners = [
         Node(
             package="controller_manager",
@@ -80,14 +97,14 @@ def configure(context, *args, **kwargs):
         for t in trackers
     ]
 
-    return [description_node, control_node, *spawners]
+    return [description_node, control_node, rviz_node, *spawners]
 
 
 def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "ndi_ip",
+                "ip",
                 default_value="0.0.0.0",
                 description="IP address of the NDI optical tracking system",
             ),
@@ -100,6 +117,11 @@ def generate_launch_description():
                 "base_frame",
                 default_value="polaris_base",
                 description="Base frame name",
+            ),
+            DeclareLaunchArgument(
+                "gui",
+                default_value="false",
+                description="Launch RViz for visualization",
             ),
             # The YAML file should have the following structure:
             # controller_manager:

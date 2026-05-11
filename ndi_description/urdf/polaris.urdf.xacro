@@ -11,7 +11,7 @@
     <xacro:arg name="tracker_names" default="" />
     <xacro:arg name="tracker_sroms" default="" />
 
-    <!-- single link represents the base of the polaris vega optical tracking system -->
+    <!-- single link represents the base of the polaris optical tracking system -->
     <!-- it cannot be negelected as robot state broadcaster requires at least one "root" link in urdf -->
     <!-- it will be used as the reference frame in tracker pose broadcasting -->
     <link name="$(arg base_frame)" />
